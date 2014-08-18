@@ -1,7 +1,7 @@
 # arg 1:  the new package version
 # arg 2:  the old package version
 
-KERNEL_NAME=-am33x
+KERNEL_NAME=-am33x-mattis
 KERNEL_VERSION=3.16.0-1-ARCH
 
 post_install () {

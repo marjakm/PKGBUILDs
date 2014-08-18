@@ -3,7 +3,7 @@
 
 buildarch=4
 
-pkgbase=linux-am33x
+pkgbase=linux-am33x-mattis
 _srcname=linux-3.16
 _kernelname=${pkgbase#linux}
 _desc="TI AM335x Beaglebone (Black)"
@@ -19,11 +19,13 @@ source=("http://www.kernel.org/pub/linux/kernel/v3.x/${_srcname}.tar.xz"
         #"http://www.kernel.org/pub/linux/kernel/v3.x/patch-${pkgver}.xz"
         "http://rcn-ee.net/deb/sid-armhf/v${pkgver}-${rcnrel}/patch-${pkgver%.0}-${rcnrel}.diff.gz"
         "git://git.code.sf.net/p/aufs/aufs3-standalone#branch=aufs${pkgver%.*}"
-        'config')
+        'config'
+        'add_flash.patch')
 md5sums=('5c569ed649a0c9711879f333e90c5386'
          'ae9e30fc8656eb699170506a70199f86'
          'SKIP'
-         '778c88451f5e6046f13fdc0673f6c692')
+         '778c88451f5e6046f13fdc0673f6c692'
+         'f0027beceb9eda9a967d540dbac7d29b')
 
 prepare() {
   cd "${srcdir}/${_srcname}"
@@ -45,6 +47,8 @@ prepare() {
   patch -Np1 -i ../aufs3-standalone/aufs3-mmap.patch
   patch -Np1 -i ../aufs3-standalone/aufs3-standalone.patch
 
+  patch -Np0 -i ../add_flash.patch
+
   cat "${srcdir}/config" > ./.config
 
   # add pkgrel to extraversion
@@ -58,7 +62,7 @@ build() {
   cd "${srcdir}/${_srcname}"
 
   # get kernel version
-  make prepare
+  make ${MAKEFLAGS} prepare
 
   # load configuration
   # Configure the kernel. Replace the line below with one of your choice.
@@ -97,12 +101,12 @@ _package() {
   KARCH=arm
 
   # get kernel version
-  _kernver="$(make kernelrelease)"
+  _kernver="${pkgver}-${pkgrel}-ARCH"
   _basekernel=${_kernver%%-*}
   _basekernel=${_basekernel%.*}
 
   mkdir -p "${pkgdir}"/{lib/modules,lib/firmware,boot/dtbs}
-  make INSTALL_MOD_PATH="${pkgdir}" modules_install
+  make ${MAKEFLAGS} INSTALL_MOD_PATH="${pkgdir}" modules_install
   cp arch/$KARCH/boot/zImage "${pkgdir}/boot/zImage"
   cp arch/$KARCH/boot/dts/*.dtb "${pkgdir}/boot/dtbs"
 
