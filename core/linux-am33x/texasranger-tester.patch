@@ -1,0 +1,148 @@
+--- drivers/mtd/spi-nor/spi-nor.c.old	2014-08-15 21:17:10.413035121 +0300
++++ drivers/mtd/spi-nor/spi-nor.c	2014-08-15 21:16:22.041034966 +0300
+@@ -483,6 +483,7 @@
+ 	{ "mx66l1g55g",  INFO(0xc2261b, 0, 64 * 1024, 2048, SPI_NOR_QUAD_READ) },
+
+ 	/* Micron */
++	{ "n25q032a13",  INFO(0x20ba16, 0, 64 * 1024,   64, 0) },
+ 	{ "n25q064",     INFO(0x20ba17, 0, 64 * 1024,  128, 0) },
+ 	{ "n25q128a11",  INFO(0x20bb18, 0, 64 * 1024,  256, 0) },
+ 	{ "n25q128a13",  INFO(0x20ba18, 0, 64 * 1024,  256, 0) },
+--- arch/arm/boot/dts/Makefile.old	2014-08-19 16:44:21.245464226 +0300
++++ arch/arm/boot/dts/Makefile	2014-08-19 16:44:07.445464095 +0300
+@@ -291,7 +291,8 @@
+ 	am335x-boneblack.dtb \
+ 	am335x-evm.dtb \
+ 	am335x-evmsk.dtb \
+-	am335x-nano.dtb
++	am335x-nano.dtb \
++	am335x-texasranger-tester.dtb
+ dtb-$(CONFIG_ARCH_OMAP4) += omap4-duovero-parlor.dtb \
+ 	omap4-panda.dtb \
+ 	omap4-panda-a4.dtb \
+--- arch/arm/boot/dts/am335x-texasranger-tester.dts.old	2014-08-19 11:52:39.100477110 +0300
++++ arch/arm/boot/dts/am335x-texasranger-tester.dts	2014-08-14 15:18:44.532688527 +0300
+@@ -0,0 +1,123 @@
++#include "am335x-boneblack.dts"
++
++/ {
++    hdmi {
++        status = "disabled";
++    };
++
++    pinmux@44e10800 {
++
++        spi1_pins: pinctrl_spi1_pins {
++            pinctrl-single,pins = <
++                0x190 0x33  // spi1_sclk, P9_31 = INPUT_PULLUP  | MODE3
++                0x194 0x33  // spi1_d0,   P9_29 = INPUT_PULLUP  | MODE3
++                0x198 0x13  // spi1_d1,   P9_30 = OUTPUT_PULLUP | MODE3
++                0x19c 0x13  // spi1_cs0 , P9_28 = OUTPUT_PULLUP | MODE3
++            >;
++        };
++
++        uart1_pins: pinmux_uart1_pins {
++            pinctrl-single,pins = <
++                0x180 0x20  // uart1_rxd, P9_26 = INPUT  | MODE0
++                0x184 0x00  // uart1_txd, P9_24 = OUTPUT | MODE0
++            >;
++        };
++
++        uart2_pins: pinmux_uart2_pins {
++            pinctrl-single,pins = <
++                0x150 0x21  // uart2_rxd, P9_22 = INPUT  | MODE1
++                0x154 0x01  // uart2_txd, P9_21 = OUTPUT | MODE1
++            >;
++        };
++
++        /* Collides with uart2 */
++        /*spi0_pins: pinmux_spi0_pins {
++            pinctrl-single,pins = <
++                0x150 0x30  // spi0_sclk, P9_22 = INPUT_PULLUP  | MODE0
++                0x154 0x30  // spi0_d0,   P9_21 = INPUT_PULLUP  | MODE0
++                0x158 0x10  // spi0_d1,   P9_18 = OUTPUT_PULLUP | MODE0
++                0x15c 0x10  // spi0_cs0,  P9_17 = OUTPUT_PULLUP | MODE0
++            >;
++        };*/
++
++        /* Not needed */
++        /*uart4_pins: pinmux_uart4_pins {
++            pinctrl-single,pins = <
++                0x70 0x26 // uart4_rxd, P9_11 = INPUT  | MODE6
++                0x74 0x06 // uart4_txd, P9_13 = OUTPUT | MODE6
++            >;
++        };*/
++
++        /* Not needed */
++        /*uart5_pins: pinmux_uart5_pins {
++            pinctrl-single,pins = <
++                0xc4 0x24  // uart5_rxd, P8_38 = INPUT  | MODE4
++                0xc0 0x04  // uart5_txd, P8_37 = OUTPUT | MODE4
++            >;
++        };*/
++
++    };
++
++    ocp {
++
++        spi@481a0000 {
++            status = "okay";
++            pinctrl-names = "default";
++            pinctrl-0 = <&spi1_pins>;
++
++            spi-flash@0 {
++                #address-cells = <1>;
++                #size-cells = <1>;
++                compatible = "n25q032a13";
++                reg = <0>; // Chip select 0
++                spi-max-frequency = <108000000>;
++            };
++
++            /*spi@0 {
++                compatible = "spidev";
++                reg = <0x0>;
++                spi-max-frequency = <0xf42400>;
++                spi-cpha; // Should this be set?
++            };*/
++        };
++
++        serial@48022000 {
++            status = "okay";
++            pinctrl-names = "default";
++            pinctrl-0 = <&uart1_pins>;
++        };
++
++        serial@48024000 {
++            status = "okay";
++            pinctrl-names = "default";
++            pinctrl-0 = <&uart2_pins>;
++        };
++
++        /* Collides with uart2 */
++        /*spi@48030000 {
++            status = "okay";
++            pinctrl-names = "default";
++            pinctrl-0 = <&spi0_pins>;
++
++            spi@0 {
++                compatible = "spidev";
++                reg = <0x0>;
++                spi-max-frequency = <0xf42400>;
++            };
++        };*/
++
++        /* Not needed */
++        /*serial@481a8000 {
++            status = "okay";
++            pinctrl-names = "default";
++            pinctrl-0 = <&uart4_pins>;
++        };*/
++
++        /* Not needed */
++        /*serial@481aa000 {
++            status = "okay";
++            pinctrl-names = "default";
++            pinctrl-0 = <&uart5_pins>;
++        };*/
++    };
++};
